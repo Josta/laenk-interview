@@ -1,9 +1,6 @@
 from django.views import View
 from django.http import JsonResponse
-from django.contrib.gis.geos import Point
-from django.contrib.gis.db.models.functions import Distance
-from django.contrib.gis.measure import D
-from appliers.models import Applier
+from appliers.services import ApplierSearchService
 
 
 class SearchViewSet(View):
@@ -21,14 +18,9 @@ class SearchViewSet(View):
     def _parse_and_validate_params(self, request):
         """
         Parse and validate GET parameters.
-
-        Args:
-            request: Django request object
-
         Returns:
-            tuple: (params_dict, error_response)
-                - params_dict: Dictionary with validated parameters if successful, None if error
-                - error_response: JsonResponse with error if validation fails, None if successful
+            - params_dict: Dictionary with validated parameters if successful, None if error
+            - error_response: JsonResponse with error if validation fails, None if successful
         """
         # Validate and parse latitude
         lat = request.GET.get("lat")
@@ -85,54 +77,18 @@ class SearchViewSet(View):
         if error_response:
             return error_response
 
-        center_lat = params["center_lat"]
-        center_lon = params["center_lon"]
-        qualified_upper = params["qualified"]
-        radius_km = params["radius_km"]
+        # Use service layer for business logic
+        queryset = ApplierSearchService.search_by_location(
+            latitude=params["center_lat"],
+            longitude=params["center_lon"],
+            qualified=params["qualified"],
+            radius_km=params["radius_km"],
+        )
 
-        # Create a Point for the search center (longitude, latitude order in GIS)
-        search_point = Point(center_lon, center_lat, srid=4326)
-
-        # Query using GeoDjango's spatial lookups and functions
-        queryset = Applier.objects.filter(
-            location__isnull=False
-        ).select_related("user")
-
-        # Filter by qualified status if provided
-        if qualified_upper:
-            queryset = queryset.filter(qualified=qualified_upper)
-
-        # Calculate distance and filter by radius
-        # Using D() for distance measurement (km=kilometers)
-        queryset = queryset.filter(
-            location__distance_lte=(search_point, D(km=radius_km))
-        ).annotate(
-            distance=Distance("location", search_point)
-        ).order_by("distance")
-
-        # Format response
-        data = []
-        for applier in queryset:
-            # Convert distance to kilometers
-            distance_km = applier.distance.km if applier.distance else 0
-
-            data.append(
-                {
-                    "applier_id": applier.id,
-                    "external_id": applier.external_id,
-                    "qualified": applier.qualified,
-                    "latitude": float(applier.latitude) if applier.latitude else None,
-                    "longitude": float(applier.longitude) if applier.longitude else None,
-                    "distance_km": round(distance_km, 2),
-                    "user": {
-                        "user_id": applier.user.id,
-                        "first_name": applier.user.first_name,
-                        "last_name": applier.user.last_name,
-                        "email": applier.user.email,
-                    },
-                    "source": applier.source,
-                    "created_at": applier.created_at,
-                }
-            )
+        # Format response using service layer
+        data = [
+            ApplierSearchService.format_applier_response(applier)
+            for applier in queryset
+        ]
 
         return JsonResponse(data, safe=False)

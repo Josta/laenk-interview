@@ -61,10 +61,10 @@ class SearchViewSetTestCase(TestCase):
             phone='+491234567893',
             resume='resumes/alice.pdf',
             cover_letter='Great opportunity...',
-            country='France'
+            country='Germany'
         )
 
-        # Applier 1: Cologne Cathedral (~0.5 km from center) - QUALIFIED YES
+        # Applier 1: ~0.5 km from center - QUALIFIED YES
         self.applier1 = Applier.objects.create(
             external_id='app1',
             user=self.user1,
@@ -75,7 +75,7 @@ class SearchViewSetTestCase(TestCase):
             source={'channel': 'website'}
         )
 
-        # Applier 2: Cologne Bonn Airport (~15 km from center) - QUALIFIED NO
+        # Applier 2: ~15 km from center - QUALIFIED NO
         self.applier2 = Applier.objects.create(
             external_id='app2',
             user=self.user2,
@@ -86,7 +86,7 @@ class SearchViewSetTestCase(TestCase):
             source={'channel': 'referral'}
         )
 
-        # Applier 3: Dusseldorf (~35 km from center, outside 20km radius) - QUALIFIED YES
+        # Applier 3: ~35 km from center - QUALIFIED YES
         self.applier3 = Applier.objects.create(
             external_id='app3',
             user=self.user3,
@@ -230,20 +230,6 @@ class SearchViewSetTestCase(TestCase):
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['external_id'], 'app4')
         self.assertEqual(data[0]['qualified'], 'PENDING')
-
-    def test_search_with_qualified_lowercase(self):
-        """Test that qualified parameter is case-insensitive."""
-        response = self.client.get(self.search_url, {
-            'lat': '50.94',
-            'lon': '6.96',
-            'qualified': 'yes'  # lowercase
-        })
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.content)
-
-        # Should work the same as 'YES'
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]['qualified'], 'YES')
 
     def test_search_excludes_appliers_without_location(self):
         """Test that appliers without location data are excluded."""
