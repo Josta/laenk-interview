@@ -163,7 +163,7 @@ class SearchViewSetTestCase(TestCase):
         self.assertIn('Invalid qualified parameter', data['error'])
 
     def test_search_without_qualified_filter(self):
-        """Test search returns all appliers within radius, sorted by distance."""
+        """Test search returns all appliers within radius, sorted by penalized distance."""
         response = self.client.get(self.search_url, {
             'lat': '50.94',
             'lon': '6.96'
@@ -175,10 +175,16 @@ class SearchViewSetTestCase(TestCase):
         # Should NOT include applier3 (too far) or applier5 (no location)
         self.assertEqual(len(data), 3)
 
-        # Check they are sorted by distance (closest first)
-        self.assertEqual(data[0]['external_id'], 'app1')  # Closest
-        self.assertEqual(data[1]['external_id'], 'app4')  # Second closest
-        self.assertEqual(data[2]['external_id'], 'app2')  # Third closest
+        # Check they are sorted by penalized distance:
+        # app1: YES at 0.5km = 0.5 * 1.0 = 0.5 (penalized distance)
+        # app4: PENDING at 2km = 2 * 1.5 = 3.0 (penalized distance)
+        # app2: NO at 15km = 15 * 2.0 = 30.0 (penalized distance)
+        self.assertEqual(data[0]['external_id'], 'app1')  # YES, 0.5km, penalty=0.5
+        self.assertEqual(data[0]['qualified'], 'YES')
+        self.assertEqual(data[1]['external_id'], 'app4')  # PENDING, 2km, penalty=3.0
+        self.assertEqual(data[1]['qualified'], 'PENDING')
+        self.assertEqual(data[2]['external_id'], 'app2')  # NO, 15km, penalty=30.0
+        self.assertEqual(data[2]['qualified'], 'NO')
 
         # Verify distances are calculated
         for applier_data in data:
@@ -303,3 +309,77 @@ class SearchViewSetTestCase(TestCase):
         data = json.loads(response.content)
         self.assertEqual(len(data), 0)
         self.assertEqual(data, [])
+
+    def test_search_sorting_by_penalized_distance(self):
+        """Test that results are sorted by penalized distance (distance × penalty multiplier)."""
+        # Create additional test appliers to verify sorting
+        user5 = User.objects.create(
+            external_id='user5',
+            first_name='Charlie',
+            last_name='Brown',
+            email='charlie@example.com',
+            phone='+491234567894',
+            resume='resumes/charlie.pdf',
+            cover_letter='Test',
+            country='Germany'
+        )
+
+        # Create appliers with different qualified status and distances
+        # YES at 10km: penalized = 10 * 1.0 = 10.0
+        applier6 = Applier.objects.create(
+            external_id='app6',
+            user=user5,
+            qualified='YES',
+            latitude=Decimal('50.85'),
+            longitude=Decimal('6.96'),
+            location=Point(6.96, 50.85, srid=4326),
+            source={'channel': 'test'}
+        )
+
+        # NO at 1km: penalized = 1 * 2.0 = 2.0
+        # This should come AFTER app4 (PENDING at 2km = 3.0) because 2.0 < 3.0
+        applier7 = Applier.objects.create(
+            external_id='app7',
+            user=user5,
+            qualified='NO',
+            latitude=Decimal('50.9450'),
+            longitude=Decimal('6.9650'),
+            location=Point(6.9650, 50.9450, srid=4326),
+            source={'channel': 'test'}
+        )
+
+        response = self.client.get(self.search_url, {
+            'lat': '50.94',
+            'lon': '6.96'
+        })
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        # Extract external_ids and qualified status with actual distances
+        results = [(item['external_id'], item['qualified'], item['distance_km']) for item in data]
+
+        # Expected penalized distances:
+        # app1: YES, 0.5km → 0.5 * 1.0 = 0.5
+        # app7: NO, 1km → 1 * 2.0 = 2.0
+        # app4: PENDING, 2km → 2 * 1.5 = 3.0
+        # app6: YES, 10km → 10 * 1.0 = 10.0
+        # app2: NO, 15km → 15 * 2.0 = 30.0
+
+        # Verify order by external_id
+        external_ids = [item['external_id'] for item in data]
+
+        # Find positions
+        app1_pos = external_ids.index('app1')
+        app7_pos = external_ids.index('app7')
+        app4_pos = external_ids.index('app4')
+        app6_pos = external_ids.index('app6')
+        app2_pos = external_ids.index('app2')
+
+        # Verify penalized distance ordering
+        self.assertLess(app1_pos, app7_pos, "app1 (penalty=0.5) should come before app7 (penalty=2.0)")
+        self.assertLess(app7_pos, app4_pos, "app7 (penalty=2.0) should come before app4 (penalty=3.0)")
+        self.assertLess(app4_pos, app6_pos, "app4 (penalty=3.0) should come before app6 (penalty=10.0)")
+        self.assertLess(app6_pos, app2_pos, "app6 (penalty=10.0) should come before app2 (penalty=30.0)")
+
+        # Key insight: NO at 1km (penalty=2.0) ranks better than PENDING at 2km (penalty=3.0)
+        # This demonstrates the merged metric working correctly
