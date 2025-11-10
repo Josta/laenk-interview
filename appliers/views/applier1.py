@@ -9,8 +9,6 @@ class Applier1ViewSet(View):
             question_count=Count("screening_questions")
         ).filter(question_count__gt=16)
 
-        sql = str(appliers_query.query);
-
         data = []
         for applier in appliers_query:
             data.append(
