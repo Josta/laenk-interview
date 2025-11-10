@@ -124,7 +124,7 @@ class SearchViewSetTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
         self.assertIn('error', data)
-        self.assertIn('lat and lon parameters are required', data['error'])
+        self.assertIn('Latitude (lat) parameter is required', data['error'])
 
     def test_search_without_lon_parameter(self):
         """Test that the endpoint returns 400 when lon parameter is missing."""
@@ -132,7 +132,7 @@ class SearchViewSetTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
         self.assertIn('error', data)
-        self.assertIn('lat and lon parameters are required', data['error'])
+        self.assertIn('Longitude (lon) parameter is required', data['error'])
 
     def test_search_with_invalid_lat_parameter(self):
         """Test that the endpoint returns 400 when lat parameter is invalid."""
@@ -140,7 +140,7 @@ class SearchViewSetTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
         self.assertIn('error', data)
-        self.assertIn('Invalid lat or lon', data['error'])
+        self.assertIn('Invalid latitude parameter', data['error'])
 
     def test_search_with_invalid_lon_parameter(self):
         """Test that the endpoint returns 400 when lon parameter is invalid."""
@@ -148,7 +148,7 @@ class SearchViewSetTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
         self.assertIn('error', data)
-        self.assertIn('Invalid lat or lon', data['error'])
+        self.assertIn('Invalid longitude parameter', data['error'])
 
     def test_search_with_invalid_qualified_parameter(self):
         """Test that the endpoint returns 400 when qualified parameter is invalid."""

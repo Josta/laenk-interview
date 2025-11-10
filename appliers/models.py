@@ -1,6 +1,13 @@
 from django.db import models
 from django.contrib.gis.db import models as gis_models
 
+from appliers.constants import (
+    QUALIFIED_YES,
+    QUALIFIED_NO,
+    QUALIFIED_PENDING,
+    WGS84_SRID,
+)
+
 
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -26,9 +33,9 @@ class User(TimeStampedModel):
 
 class Applier(TimeStampedModel):
     QUALIFIED_CHOICES = [
-        ("YES", "Yes"),
-        ("NO", "No"),
-        ("PENDING", "Pending"),
+        (QUALIFIED_YES, "Yes"),
+        (QUALIFIED_NO, "No"),
+        (QUALIFIED_PENDING, "Pending"),
     ]
 
     external_id = models.CharField(max_length=100)
@@ -45,7 +52,7 @@ class Applier(TimeStampedModel):
     )
     # PostGIS PointField for efficient spatial queries
     # Using geography=True for accurate distance calculations on Earth's surface
-    location = gis_models.PointField(geography=True, null=True, blank=True, srid=4326)
+    location = gis_models.PointField(geography=True, null=True, blank=True, srid=WGS84_SRID)
 
 
 class ScreeningQuestion(TimeStampedModel):
