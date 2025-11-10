@@ -11,9 +11,23 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='applier',
-            name='location',
-            field=django.contrib.gis.db.models.fields.PointField(blank=True, geography=True, null=True, srid=4326),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE appliers_applier
+                ADD COLUMN location geography(Point, 4326)
+                GENERATED ALWAYS AS (
+                    ST_SetSRID(
+                        ST_MakePoint(
+                            longitude::double precision,
+                            latitude::double precision
+                        ),
+                        4326
+                    )
+                ) STORED;
+            """,
+            reverse_sql="""
+                ALTER TABLE appliers_applier
+                DROP COLUMN location;
+            """
         ),
     ]

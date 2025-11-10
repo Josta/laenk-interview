@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.gis.db import models as gis_models
+from django.contrib.gis.geos import Point
 
 from appliers.constants import (
     QUALIFIED_YES,
@@ -30,6 +31,9 @@ class User(TimeStampedModel):
     def __str__(self):
         return self.name
 
+# prevents Django from setting this db-generated field
+class GeneratedPointField(gis_models.PointField):
+    generated = True
 
 class Applier(TimeStampedModel):
     QUALIFIED_CHOICES = [
@@ -50,10 +54,11 @@ class Applier(TimeStampedModel):
     longitude = models.DecimalField(
         max_digits=9, decimal_places=6, null=True, blank=True
     )
+    
     # PostGIS PointField for efficient spatial queries
-    # Using geography=True for accurate distance calculations on Earth's surface
-    location = gis_models.PointField(geography=True, null=True, blank=True, srid=WGS84_SRID)
-
+    location = GeneratedPointField(
+        geography=True, null=True, blank=True, srid=WGS84_SRID
+    )
 
 class ScreeningQuestion(TimeStampedModel):
     application = models.ForeignKey(

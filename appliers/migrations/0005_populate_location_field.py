@@ -9,12 +9,13 @@ def populate_location_from_lat_lon(apps, schema_editor):
     Populate the location PointField from existing latitude and longitude values.
     """
     Applier = apps.get_model('appliers', 'Applier')
-
-    appliers_to_update = []
-    for applier in Applier.objects.filter(
+    appliers_query = Applier.objects.filter(
         latitude__isnull=False,
         longitude__isnull=False
-    ):
+    )
+    
+    appliers_to_update = []
+    for applier in appliers_query:
         # Create Point with (longitude, latitude) order - GIS convention
         applier.location = Point(float(applier.longitude), float(applier.latitude), srid=4326)
         appliers_to_update.append(applier)
