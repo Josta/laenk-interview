@@ -1,6 +1,4 @@
-"""
-Forms for appliers application.
-"""
+import logging
 from django import forms
 from appliers.constants import (
     QUALIFIED_CHOICES,
@@ -9,6 +7,7 @@ from appliers.constants import (
     MAX_RADIUS_KM,
 )
 
+logger = logging.getLogger(__name__)
 
 class ApplierSearchForm(forms.Form):
     """
@@ -76,3 +75,17 @@ class ApplierSearchForm(forms.Form):
         """Return radius or default value."""
         radius = self.cleaned_data.get('radius')
         return radius if radius is not None else DEFAULT_SEARCH_RADIUS_KM
+
+    def get_error_message(self) -> str:
+        # Extract first error message from form errors
+        errors = self.errors.as_data()
+        first_error_field = next(iter(errors))
+        first_error = errors[first_error_field][0]
+        error_message = first_error.message
+
+        logger.warning(
+            "Invalid search parameters",
+            extra={
+                "errors": self.errors.get_json_data()
+            },
+        )

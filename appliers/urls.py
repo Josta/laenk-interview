@@ -1,7 +1,7 @@
 from django.urls import path
 
-from appliers.views.applier1 import Applier1ViewSet
-from appliers.views.applier2 import Applier2ViewSet
+from appliers.views.list1 import Applier1ViewSet
+from appliers.views.list2 import Applier2ViewSet
 from appliers.views.search import SearchViewSet
 
 urlpatterns = [
