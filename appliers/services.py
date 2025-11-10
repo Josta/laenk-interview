@@ -3,16 +3,21 @@ Service layer for applier-related business logic.
 """
 import logging
 from typing import Optional, Dict, Any
-from decimal import Decimal
 
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
-from django.db.models import QuerySet, Case, When, IntegerField, F, FloatField
-from django.db import models
+from django.db.models import QuerySet, Case, When, F, FloatField
 
 from appliers.models import Applier
-from appliers.constants import WGS84_SRID, DEFAULT_SEARCH_RADIUS_KM, QUALIFIED_YES, QUALIFIED_PENDING, QUALIFIED_NO
+from appliers.constants import (
+    WGS84_SRID,
+    DEFAULT_SEARCH_RADIUS_KM,
+    QUALIFIED_YES,
+    QUALIFIED_PENDING,
+    QUALIFIED_NO,
+)
+from appliers.serializers import ApplierSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -122,30 +127,4 @@ class ApplierSearchService:
             >>> print(formatted['distance_km'])
             5.23
         """
-        # Convert distance to kilometers
-        distance_km: float = applier.distance.km if hasattr(applier, "distance") else 0.0
-
-        # Convert Decimal to float for JSON serialization
-        latitude: Optional[float] = (
-            float(applier.latitude) if applier.latitude is not None else None
-        )
-        longitude: Optional[float] = (
-            float(applier.longitude) if applier.longitude is not None else None
-        )
-
-        return {
-            "applier_id": applier.id,
-            "external_id": applier.external_id,
-            "qualified": applier.qualified,
-            "latitude": latitude,
-            "longitude": longitude,
-            "distance_km": round(distance_km, 2),
-            "user": {
-                "user_id": applier.user.id,
-                "first_name": applier.user.first_name,
-                "last_name": applier.user.last_name,
-                "email": applier.user.email,
-            },
-            "source": applier.source,
-            "created_at": applier.created_at,
-        }
+        return ApplierSerializer.to_dict(applier, include_distance=True)
