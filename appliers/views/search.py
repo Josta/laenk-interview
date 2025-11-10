@@ -5,6 +5,7 @@ from django.views import View
 from django.http import JsonResponse, HttpRequest
 from appliers.services import ApplierSearchService
 from appliers.forms import ApplierSearchForm
+from appliers.serializers import ApplierSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +100,7 @@ class SearchViewSet(View):
 
         # Format response using service layer
         data: List[Dict] = [
-            ApplierSearchService.format_applier_response(applier) for applier in queryset
+            ApplierSerializer.to_dict(applier, include_distance=True) for applier in queryset
         ]
 
         logger.info(

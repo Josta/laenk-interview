@@ -17,7 +17,6 @@ from appliers.constants import (
     QUALIFIED_PENDING,
     QUALIFIED_NO,
 )
-from appliers.serializers import ApplierSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -38,14 +37,7 @@ class ApplierSearchService:
         Search for appliers within a specified radius of a geographic point.
 
         Results are sorted by a penalized distance metric that combines actual distance
-        with qualification status:
-        - YES qualified: distance × 1.0 (no penalty)
-        - PENDING qualified: distance × 1.5 (slight penalty)
-        - NO qualified: distance × 2.0 (larger penalty)
-        - NULL qualified: distance × 3.0 (largest penalty)
-
-        This means a PENDING applier at 10km will rank similarly to a YES applier at 15km,
-        and a NO applier at 5km will rank similarly to a YES applier at 10km.
+        with qualification status (non-YES statuses are penalized).
 
         Args:
             latitude: Latitude of the search center point (-90 to 90)
@@ -100,31 +92,4 @@ class ApplierSearchService:
         )
 
         return queryset
-
-    @staticmethod
-    def format_applier_response(applier: Applier) -> Dict[str, Any]:
-        """
-        Format an applier object into a JSON-serializable dictionary.
-
-        Args:
-            applier: Applier model instance with annotated distance
-
-        Returns:
-            dict: Formatted applier data with the following structure:
-                - applier_id: Primary key of the applier
-                - external_id: External reference ID
-                - qualified: Qualification status (YES, NO, PENDING)
-                - latitude: Latitude coordinate
-                - longitude: Longitude coordinate
-                - distance_km: Distance from search point in kilometers
-                - user: Dictionary with user information
-                - source: Source information (JSON field)
-                - created_at: Creation timestamp
-
-        Example:
-            >>> applier = Applier.objects.first()
-            >>> formatted = ApplierSearchService.format_applier_response(applier)
-            >>> print(formatted['distance_km'])
-            5.23
-        """
-        return ApplierSerializer.to_dict(applier, include_distance=True)
+    
