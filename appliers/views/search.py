@@ -4,7 +4,7 @@ from typing import Dict, List
 from django.views import View
 from django.http import JsonResponse, HttpRequest
 from appliers.services.search_service import ApplierSearchService
-from appliers.forms.search import ApplierSearchForm
+from appliers.forms.search_form import ApplierSearchForm
 from appliers.serializers import ApplierSerializer
 
 logger = logging.getLogger(__name__)
