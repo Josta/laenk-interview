@@ -4,8 +4,8 @@ services:
     container_name: challenge-db
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: challenge
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: interview
     ports:
       - "5432:5432"
     healthcheck:
