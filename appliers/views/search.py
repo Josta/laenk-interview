@@ -35,7 +35,7 @@ class SearchViewSet(View):
         # Parse and validate parameters
         form = ApplierSearchForm(request.GET)
         if not form.is_valid():
-            return JsonResponse({"error": form.get_error_message}, status=400)
+            return JsonResponse({"error": form.get_error_message()}, status=400)
 
         params = {
             "latitude": form.cleaned_data["lat"],

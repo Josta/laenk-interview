@@ -1,12 +1,13 @@
-from django.test import TestCase, Client
+from django.test import Client
 from django.urls import reverse
 from decimal import Decimal
 from django.contrib.gis.geos import Point
 from appliers.models import User, Applier
+from appliers.tests.base import NoLoggingTestCase
 import json
 
 
-class SearchViewSetTestCase(TestCase):
+class SearchViewSetTestCase(NoLoggingTestCase):
     """
     Test cases for the geolocation search endpoint.
     """

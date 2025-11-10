@@ -77,7 +77,7 @@ class ApplierSearchForm(forms.Form):
         return radius if radius is not None else DEFAULT_SEARCH_RADIUS_KM
 
     def get_error_message(self) -> str:
-        # Extract first error message from form errors
+        """Extract first error message from form errors."""
         errors = self.errors.as_data()
         first_error_field = next(iter(errors))
         first_error = errors[first_error_field][0]
@@ -89,3 +89,5 @@ class ApplierSearchForm(forms.Form):
                 "errors": self.errors.get_json_data()
             },
         )
+
+        return error_message
