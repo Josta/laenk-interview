@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.gis.db import models as gis_models
 
 
 class TimeStampedModel(models.Model):
@@ -42,6 +43,9 @@ class Applier(TimeStampedModel):
     longitude = models.DecimalField(
         max_digits=9, decimal_places=6, null=True, blank=True
     )
+    # PostGIS PointField for efficient spatial queries
+    # Using geography=True for accurate distance calculations on Earth's surface
+    location = gis_models.PointField(geography=True, null=True, blank=True, srid=4326)
 
 
 class ScreeningQuestion(TimeStampedModel):

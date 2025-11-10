@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.gis",
     "appliers",
 ]
 
@@ -80,6 +81,7 @@ DATABASES = {
         **dj_database_url.config(
             default="postgres://postgres:admin@localhost:5432/interview"
         ),
+        "ENGINE": "django.contrib.gis.db.backends.postgis",
         "OPTIONS": {
             "pool": False,
         },

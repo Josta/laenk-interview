@@ -7,5 +7,5 @@ from appliers.views.search import SearchViewSet
 urlpatterns = [
     path("list/", Applier1ViewSet.as_view()),
     path("list2/", Applier2ViewSet.as_view()),
-    path("search", SearchViewSet.as_view()),
+    path("search", SearchViewSet.as_view(), name="appliers-search"),
 ]

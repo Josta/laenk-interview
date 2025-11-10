@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from decimal import Decimal
+from django.contrib.gis.geos import Point
 from appliers.models import User, Applier
 import json
 
@@ -16,7 +17,7 @@ class SearchViewSetTestCase(TestCase):
         Test location: Cologne, Germany (50.94, 6.96)
         """
         self.client = Client()
-        self.search_url = '/api/search'
+        self.search_url = '/api/v1/appliers/search'
 
         # Create test users
         self.user1 = User.objects.create(
@@ -70,6 +71,7 @@ class SearchViewSetTestCase(TestCase):
             qualified='YES',
             latitude=Decimal('50.9413'),
             longitude=Decimal('6.9583'),
+            location=Point(6.9583, 50.9413, srid=4326),
             source={'channel': 'website'}
         )
 
@@ -80,6 +82,7 @@ class SearchViewSetTestCase(TestCase):
             qualified='NO',
             latitude=Decimal('50.8659'),
             longitude=Decimal('7.1427'),
+            location=Point(7.1427, 50.8659, srid=4326),
             source={'channel': 'referral'}
         )
 
@@ -90,6 +93,7 @@ class SearchViewSetTestCase(TestCase):
             qualified='YES',
             latitude=Decimal('51.2277'),
             longitude=Decimal('6.7735'),
+            location=Point(6.7735, 51.2277, srid=4326),
             source={'channel': 'linkedin'}
         )
 
@@ -100,6 +104,7 @@ class SearchViewSetTestCase(TestCase):
             qualified='PENDING',
             latitude=Decimal('50.9500'),
             longitude=Decimal('6.9700'),
+            location=Point(6.9700, 50.9500, srid=4326),
             source={'channel': 'website'}
         )
 
